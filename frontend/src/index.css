@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* ─── Design Tokens ─────────────────────────────────────── */
+:root {
+  --font:    'Space Grotesk', sans-serif;
+  --mono:    'Courier New', monospace;
+
+  /* Light mode */
+  --bg:          #F5F5F5;
+  --bg-surface:  #FFFFFF;
+  --bg-raised:   #EBEBEB;
+  --fg:          #0D0D0D;
+  --fg-muted:    #6B6B6B;
+  --accent:      #E85D04;
+  --accent-dim:  rgba(232,93,4,0.12);
+  --danger:      #D62828;
+  --border-color:#E0E0E0;
+
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   16px;
+  --r-full: 9999px;
+
+  --t-fast: 0.15s ease;
+  --t-med:  0.25s ease;
+}
+
+[data-theme='dark'] {
+  --bg:          #0D0D0D;
+  --bg-surface:  #141414;
+  --bg-raised:   #1E1E1E;
+  --fg:          #F5F5F5;
+  --fg-muted:    #888;
+  --border-color:#2A2A2A;
+  --accent-dim:  rgba(232,93,4,0.18);
+}
+
+/* ─── Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 6px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: var(--border-color); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--fg-muted); }
+
+/* ─── Leaflet fix: remove default blue focus ring on map ── */
+.leaflet-container:focus { outline: none; }
+.leaflet-control-attribution { font-size: 10px !important; }
