@@ -71,12 +71,27 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
       initMap();
     });
   }, []);
+  
+  const MUMBAI_BOUNDS = [
+    [18.8500, 72.7500], // Southwest corner (Lat, Lng) - Below Colaba
+    [19.3500, 73.1000]  // Northeast corner (Lat, Lng) - Above Mira Bhayandar/Thane
+  ];
 
+  const initMap = () => {
+     // ... 
+    
   const initMap = () => {
     const L = LRef.current;
     if (!L || !containerRef.current || mapRef.current) return;
-    const center = userLocation ? [userLocation.lat, userLocation.lng] : [21.1458, 79.0882];
-    const map = L.map(containerRef.current, { center, zoom: 15, zoomControl: false });
+    const center = userLocation ? [userLocation.lat, userLocation.lng] : [19.0760, 72.8777]; // Fallback to Mumbai center
+    const map = L.map(containerRef.current, { 
+    center, 
+    zoom: 15, 
+    minZoom: 11, // Prevent zooming out so far that the bounds look weird
+    zoomControl: false,
+    maxBounds: MUMBAI_BOUNDS, 
+    maxBoundsViscosity: 1.0 // Makes the boundary solid so users can't drag past it
+});
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     const tiles = L.tileLayer(theme === 'dark' ? DARK_TILES : LIGHT_TILES, {
       attribution: ATTRIBUTION, maxZoom: 19,
