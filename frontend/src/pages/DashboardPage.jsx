@@ -32,9 +32,34 @@ export default function DashboardPage() {
     return () => clearInterval(iv);
   }, []);
 
-  // Check for active emergency on load
-  useEffect(() => {
-    api.get('/sos/active').then(r => {
+// Check for active emergency on load — auto-clear stale ones
+useEffect(() => {
+  api.get('/sos/active').then(r => {
+    if (r.data.emergency) {
+      // Auto-resolve any emergency older than 30 minutes
+      const triggered = new Date(r.data.emergency.triggered_at);
+      const ageMinutes = (Date.now() - triggered) / 1000 / 60;
+      if (ageMinutes > 30) {
+        api.post('/sos/resolve', { emergencyId: r.data.emergency.id }).catch(() => {});
+        return;
+      }
+      setSosStatus('active');
+      setEmergencyId(r.data.emergency.id);
+      setVolPhase('dispatched');
+      setSidePanel('sos');
+      const vols = r.data.assignments?.map(a => ({
+        id: a.volunteer_id,
+        name: a.volunteers?.users?.name || 'Volunteer',
+        isVerified: a.volunteers?.is_verified,
+        rating: a.volunteers?.rating,
+        distance: '?',
+        currentLat: a.volunteers?.last_lat || location?.lat || 21.1458,
+        currentLng: a.volunteers?.last_lng || location?.lng || 79.0882,
+      })) || [];
+      setVolunteers(vols);
+    }
+  }).catch(() => {});
+}, []);
       if (r.data.emergency) {
         setSosStatus('active');
         setEmergencyId(r.data.emergency.id);
