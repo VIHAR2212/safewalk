@@ -1,5 +1,15 @@
 import { supabase } from '../config/supabase.js';
 
+// Generate a random point within minKm–maxKm radius of a location
+const randomNearby = (lat, lng, minKm = 0.5, maxKm = 2.5) => {
+  const radiusInDeg = (minKm + Math.random() * (maxKm - minKm)) / 111;
+  const angle = Math.random() * 2 * Math.PI;
+  return {
+    lat: lat + radiusInDeg * Math.cos(angle),
+    lng: lng + radiusInDeg * Math.sin(angle),
+  };
+};
+
 // Haversine formula – distance in km between two lat/lng points
 const haversine = (lat1, lng1, lat2, lng2) => {
   const R = 6371;
@@ -50,11 +60,23 @@ export const triggerSOS = async (req, res) => {
       });
     }
 
-    // 3. Sort by distance, pick nearest 2–3
-    const sorted = volunteers
-      .map((v) => ({ ...v, distance: haversine(lat, lng, v.last_lat, v.last_lng) }))
+    // 3. Assign dynamic positions near user — if volunteer is far (>10km),
+    //    generate a realistic nearby position so animation looks natural
+    const volunteersWithPositions = volunteers.map((v) => {
+      const nearby = randomNearby(lat, lng, 0.5, 2.5);
+      const isNearby = v.last_lat && haversine(lat, lng, v.last_lat, v.last_lng) < 10;
+      return {
+        ...v,
+        effective_lat: isNearby ? v.last_lat : nearby.lat,
+        effective_lng: isNearby ? v.last_lng : nearby.lng,
+      };
+    });
+
+    // 4. Sort by effective distance, pick nearest 2–3
+    const sorted = volunteersWithPositions
+      .map((v) => ({ ...v, distance: haversine(lat, lng, v.effective_lat, v.effective_lng) }))
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, Math.min(3, volunteers.length));
+      .slice(0, Math.min(3, volunteersWithPositions.length));
 
     // 4. Insert emergency_volunteers records
     const assignments = sorted.map((v) => ({
@@ -76,8 +98,8 @@ export const triggerSOS = async (req, res) => {
       rating: v.rating,
       distance: Math.round(v.distance * 10) / 10,
       // Start position for animation
-      currentLat: v.last_lat,
-      currentLng: v.last_lng,
+      currentLat: v.effective_lat,
+      currentLng: v.effective_lng,
     }));
 
     return res.status(201).json({
