@@ -72,19 +72,40 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
     });
   }, []);
 
-  const initMap = () => {
+    const initMap = () => {
     const L = LRef.current;
     if (!L || !containerRef.current || mapRef.current) return;
-    const center = userLocation ? [userLocation.lat, userLocation.lng] : [21.1458, 79.0882];
-    const map = L.map(containerRef.current, { center, zoom: 15, zoomControl: false });
+
+    // 1. Define bounds to cover Mumbai up to Mira Bhayandar & Thane
+    const MUMBAI_BOUNDS = [
+      [18.8500, 72.7500], // Southwest coordinate (Below Colaba)
+      [19.3500, 73.1000]  // Northeast coordinate (Above Mira Bhayandar)
+    ];
+
+    // 2. Default fallback center to Mumbai (instead of Nagpur)
+    const center = userLocation ? [userLocation.lat, userLocation.lng] : [19.0760, 72.8777];
+
+    // 3. Apply bounds and viscosity to the map instance
+    const map = L.map(containerRef.current, { 
+      center, 
+      zoom: 15, 
+      minZoom: 11, // Keeps users from zooming out into space
+      zoomControl: false,
+      maxBounds: MUMBAI_BOUNDS,
+      maxBoundsViscosity: 1.0 // Makes the edges solid like a wall
+    });
+    
     L.control.zoom({ position: 'bottomright' }).addTo(map);
+
     const tiles = L.tileLayer(theme === 'dark' ? DARK_TILES : LIGHT_TILES, {
       attribution: ATTRIBUTION, maxZoom: 19,
     }).addTo(map);
+
     tileLayerRef.current = tiles;
     mapRef.current = map;
     mapReadyRef.current = true;
   };
+  
 
   useEffect(() => {
     if (!tileLayerRef.current) return;
