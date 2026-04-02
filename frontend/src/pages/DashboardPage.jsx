@@ -7,9 +7,9 @@ import SOSButton from '../components/sos/SOSButton';
 import RiskPanel from '../components/dashboard/RiskPanel';
 import RiskZoneMap from '../components/map/RiskZoneMap';
 import VolunteerPanel from '../components/sos/VolunteerPanel';
+import ForumPanel from '../components/dashboard/ForumPanel';
 import { useUserLocation } from '../hooks/useLocation';
 import api from '../services/api';
-import ForumPanel from '../components/dashboard/ForumPanel';
 
 export default function DashboardPage() {
   const { location, locLoading, getLocation } = useUserLocation();
@@ -136,11 +136,11 @@ export default function DashboardPage() {
     transform: isMobile && !isMobileMenuOpen ? 'translateX(-100%)' : 'translateX(0)',
     transition: 'transform 0.3s ease-in-out',
   };
-    return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', background: 'var(--bg)' }}>
+     return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg)', position: 'relative' }}>
       <Navbar volunteerCount={volCount} />
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', width: '100vw' }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
 
         {isMobile && isMobileMenuOpen && (
           <div 
@@ -182,7 +182,6 @@ export default function DashboardPage() {
             ) : ( <SOSButton status={sosStatus} onSOS={handleSOS} onResolve={handleResolve} /> )}
           </div>
 
-                    {/* Panel tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', overflowX: 'auto' }}>
            {['risk', 'sos', 'zones', 'forum'].map(p => (
               <button key={p} onClick={() => setSidePanel(p)} style={{
@@ -198,7 +197,6 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Panel content */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
             {sidePanel === 'risk' && <RiskPanel />}
             {sidePanel === 'forum' && <ForumPanel userLocation={location} userRole="user" userName="Demo User" />}
@@ -220,33 +218,17 @@ export default function DashboardPage() {
           </div>
         </aside>
 
-       <main style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0, width: '100%' }}>
+        <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
           <MapView userLocation={location} volunteers={volunteers} sosActive={sosStatus === 'active'} onVolunteerArrived={handleVolunteerArrived} />
 
-                    {isMobile && (
+          {isMobile && (
             <button 
               onClick={() => setIsMobileMenuOpen(true)} 
-              style={{ 
-                position: 'absolute', 
-                top: 16, 
-                left: 16, 
-                background: '#1A1A1A', 
-                border: '2px solid #E85D04', 
-                borderRadius: '8px', 
-                padding: '10px', 
-                cursor: 'pointer', 
-                color: '#E85D04', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                boxShadow: '0 4px 12px rgba(0,0,0,0.8)', 
-                zIndex: 9999 
-              }}
+              style={{ position: 'absolute', top: 16, left: 16, background: '#1A1A1A', border: '2px solid #E85D04', borderRadius: '8px', padding: '10px', cursor: 'pointer', color: '#E85D04', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.8)', zIndex: 9999 }}
             >
               <Menu size={24} />
             </button>
           )}
-          
 
           {sosStatus === 'active' && volPhase === 'safe' && (
             <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', background: '#D62828', color: '#fff', padding: '12px 24px', borderRadius: 'var(--r-full)', fontWeight: 700, fontSize: 15, boxShadow: '0 4px 20px rgba(214,40,40,0.5)', animation: 'fadeIn 0.5s ease', zIndex: 10 }}>
@@ -262,4 +244,4 @@ export default function DashboardPage() {
       </div>
     </div>
   );
-}
+                      }
