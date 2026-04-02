@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MapPin, Users, Activity, ChevronRight, X, Menu } from 'lucide-react';
+import { MapPin, Users, Activity, X, Menu } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Navbar from '../components/ui/Navbar';
 import MapView from '../components/map/MapView';
