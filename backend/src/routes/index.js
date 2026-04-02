@@ -7,6 +7,7 @@ import {
   updateLocation,
   getMyVolunteerProfile,
 } from '../controllers/volunteerController.js';
+import { getNearbyZones, reportZone, checkZoneEntry } from '../controllers/riskZoneController.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -27,5 +28,10 @@ router.get('/volunteers', authMiddleware, getVolunteerStats);
 router.patch('/volunteers/availability', authMiddleware, requireRole('volunteer'), updateAvailability);
 router.patch('/volunteers/location', authMiddleware, requireRole('volunteer'), updateLocation);
 router.get('/volunteers/profile', authMiddleware, requireRole('volunteer'), getMyVolunteerProfile);
+
+// Risk Zones
+router.get('/risk-zones', authMiddleware, getNearbyZones);
+router.post('/risk-zones/report', authMiddleware, reportZone);
+router.post('/risk-zones/check-entry', authMiddleware, checkZoneEntry);
 
 export default router;
