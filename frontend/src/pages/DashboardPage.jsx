@@ -5,7 +5,6 @@ import Navbar from '../components/ui/Navbar';
 import MapView from '../components/map/MapView';
 import SOSButton from '../components/sos/SOSButton';
 import VolunteerPanel from '../components/sos/VolunteerPanel';
-import RiskZoneMap from '../components/map/RiskZoneMap';
 import { useUserLocation } from '../hooks/useLocation';
 import api from '../services/api';
 
@@ -191,7 +190,7 @@ useEffect(() => {
                     <Activity size={32} style={{ marginBottom: 12, opacity: 0.4 }} />
                     <p style={{ fontSize: 13 }}>No active emergency. Hold the SOS button if you need help.</p>
                   </div>
-            )}
+             }
           </div>
         </aside>
 
