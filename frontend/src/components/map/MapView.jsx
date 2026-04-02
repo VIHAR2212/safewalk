@@ -210,6 +210,7 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
   }, [userLocation]);
 
   // When SOS triggers — upgrade 3 nearest to named markers, grey out the rest
+    // When SOS triggers — upgrade 3 nearest to named markers, grey out the rest
   useEffect(() => {
     const L = LRef.current;
     const map = mapRef.current;
@@ -238,6 +239,14 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
 
     if (!volunteers?.length || !userLocation) return;
 
+    // Helper to calculate tier inside the map view
+    const getMapTier = (assists, rating) => {
+      if (assists >= 150 && rating >= 4.8) return { name: 'Guardian', color: '#8b5cf6', icon: '💎' }; 
+      if (assists >= 50 && rating >= 4.5) return { name: 'Gold', color: '#eab308', icon: '🏆' }; 
+      if (assists >= 11 && rating >= 4.2) return { name: 'Silver', color: '#94a3b8', icon: '🛡️' }; 
+      return { name: 'Bronze', color: '#d97706', icon: '🥉' }; 
+    };
+
     // Grey out ALL idle markers first
     allVolMarkersRef.current.forEach((marker) => {
       const el = marker.getElement()?.firstChild;
@@ -249,8 +258,10 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
       const marker = allVolMarkersRef.current[i];
       if (!marker) return;
 
-      // Store original position before moving
-      const origPos = allVolPositionsRef.current[i];
+      // Calculate the tier based on the volunteer's data (defaulting to 0 if missing)
+      const assists = vol.total_assists || 0;
+      const rating = vol.rating || 0;
+      const tier = getMapTier(assists, rating);
 
       // Move marker to volunteer's actual starting position
       marker.setLatLng([vol.currentLat, vol.currentLng]);
@@ -263,12 +274,26 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
         el.classList.remove('idle-during-sos');
       }
 
-      // Upgrade popup
+      // Upgrade popup with the new Trust Card HTML
+      const popupHtml = `
+        <div style="padding: 4px; min-width: 140px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; margin-bottom: 6px;">
+            <strong style="font-size: 14px; display: flex; align-items: center; gap: 4px;">
+              ${vol.name} ${vol.isVerified ? '<span style="color: #22c55e;" title="Verified">✓</span>' : ''}
+            </strong>
+            <span style="font-size: 10px; background: ${tier.color}; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+              ${tier.name}
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #A0A0A0;">
+             <span>⭐ ${rating}</span>
+             <span>📍 ${vol.distance || '?'} km</span>
+          </div>
+        </div>
+      `;
+
       marker.unbindPopup();
-      marker.bindPopup(
-        `<b>${vol.name}${vol.isVerified ? ' ✓' : ''}</b><br>⭐ ${vol.rating} &nbsp; 📍 ${vol.distance} km`,
-        { className: 'sw-popup', closeButton: false }
-      );
+      marker.bindPopup(popupHtml, { className: 'sw-popup', closeButton: false });
 
       // Draw dashed route preview
       const routeLine = L.polyline(
@@ -298,7 +323,7 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
       }, 400 + i * 300);
     });
   }, [sosActive, volunteers, userLocation]);
-
+  
   useEffect(() => {
     const obs = new ResizeObserver(() => mapRef.current?.invalidateSize());
     if (containerRef.current) obs.observe(containerRef.current);
