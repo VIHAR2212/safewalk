@@ -136,10 +136,10 @@ export default function DashboardPage() {
     transition: 'transform 0.3s ease-in-out',
   };
     return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg)', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', background: 'var(--bg)' }}>
       <Navbar volunteerCount={volCount} />
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', width: '100vw' }}>
 
         {isMobile && isMobileMenuOpen && (
           <div 
@@ -202,7 +202,7 @@ export default function DashboardPage() {
           </div>
         </aside>
 
-        <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+       <main style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0, width: '100%' }}>
           <MapView userLocation={location} volunteers={volunteers} sosActive={sosStatus === 'active'} onVolunteerArrived={handleVolunteerArrived} />
 
                     {isMobile && (
