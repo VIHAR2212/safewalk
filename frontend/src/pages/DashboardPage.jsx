@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import Navbar from '../components/ui/Navbar';
 import MapView from '../components/map/MapView';
 import SOSButton from '../components/sos/SOSButton';
+import RiskPanel from '../components/dashboard/RiskPanel';
 import RiskZoneMap from '../components/map/RiskZoneMap';
 import VolunteerPanel from '../components/sos/VolunteerPanel';
 import { useUserLocation } from '../hooks/useLocation';
