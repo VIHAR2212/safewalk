@@ -9,6 +9,7 @@ import RiskZoneMap from '../components/map/RiskZoneMap';
 import VolunteerPanel from '../components/sos/VolunteerPanel';
 import { useUserLocation } from '../hooks/useLocation';
 import api from '../services/api';
+import ForumPanel from '../components/dashboard/ForumPanel';
 
 export default function DashboardPage() {
   const { location, locLoading, getLocation } = useUserLocation();
@@ -181,18 +182,35 @@ export default function DashboardPage() {
             ) : ( <SOSButton status={sosStatus} onSOS={handleSOS} onResolve={handleResolve} /> )}
           </div>
 
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)' }}>
-           {['risk', 'sos', 'zones'].map(p => (
-              <button key={p} onClick={() => setSidePanel(p)} style={{ flex: 1, padding: '10px', border: 'none', background: 'transparent', borderBottom: sidePanel === p ? '2px solid var(--accent)' : '2px solid transparent', color: sidePanel === p ? 'var(--accent)' : 'var(--fg-muted)', fontFamily: 'var(--font)', fontSize: 12, fontWeight: 600, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.5, transition: 'color var(--t-fast)' }}>
-                {p === 'risk' ? '⚠ Risk' : p === 'sos' ? '🚨 Response' : '🗺 Zones'}
+                    {/* Panel tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', overflowX: 'auto' }}>
+           {['risk', 'sos', 'zones', 'forum'].map(p => (
+              <button key={p} onClick={() => setSidePanel(p)} style={{
+                flex: 1, padding: '10px 5px', border: 'none', background: 'transparent',
+                borderBottom: sidePanel === p ? '2px solid var(--accent)' : '2px solid transparent',
+                color: sidePanel === p ? 'var(--accent)' : 'var(--fg-muted)',
+                fontFamily: 'var(--font)', fontSize: 11, fontWeight: 600,
+                cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.5,
+                transition: 'color var(--t-fast)', whiteSpace: 'nowrap'
+              }}>
+                {p === 'risk' ? '⚠ Risk' : p === 'sos' ? '🚨 SOS' : p === 'zones' ? '🗺 Zones' : '💬 Forum'}
               </button>
             ))}
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px' }}>
+          {/* Panel content */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
             {sidePanel === 'risk' && <RiskPanel />}
-            {sidePanel === 'zones' && ( <div style={{ margin: '-16px', height: 'calc(100% + 32px)' }}><RiskZoneMap userLocation={location} /></div> )}
-            {sidePanel === 'sos' && ( sosStatus === 'active' ? ( <VolunteerPanel volunteers={volunteers} phase={volPhase} /> ) : (
+            {sidePanel === 'forum' && <ForumPanel userLocation={location} userRole="user" userName="Demo User" />}
+            {sidePanel === 'zones' && (
+              <div style={{ margin: '-16px', height: 'calc(100% + 32px)' }}>
+                <RiskZoneMap userLocation={location} />
+              </div>
+            )}
+            {sidePanel === 'sos' && (
+              sosStatus === 'active' ? (
+                <VolunteerPanel volunteers={volunteers} phase={volPhase} />
+              ) : (
                 <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
                   <Activity size={32} style={{ marginBottom: 12, opacity: 0.4 }} />
                   <p style={{ fontSize: 13 }}>No active emergency. Hold the SOS button if you need help.</p>
