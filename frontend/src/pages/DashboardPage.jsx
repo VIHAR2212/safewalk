@@ -205,11 +205,30 @@ export default function DashboardPage() {
         <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
           <MapView userLocation={location} volunteers={volunteers} sosActive={sosStatus === 'active'} onVolunteerArrived={handleVolunteerArrived} />
 
-          {isMobile && (
-            <button onClick={() => setIsMobileMenuOpen(true)} style={{ position: 'absolute', top: 16, left: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--r-md)', padding: '10px', cursor: 'pointer', color: 'var(--fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.3)', zIndex: 5 }}>
-              <Menu size={20} />
+                    {isMobile && (
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)} 
+              style={{ 
+                position: 'absolute', 
+                top: 16, 
+                left: 16, 
+                background: '#1A1A1A', 
+                border: '2px solid #E85D04', 
+                borderRadius: '8px', 
+                padding: '10px', 
+                cursor: 'pointer', 
+                color: '#E85D04', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                boxShadow: '0 4px 12px rgba(0,0,0,0.8)', 
+                zIndex: 9999 
+              }}
+            >
+              <Menu size={24} />
             </button>
           )}
+          
 
           {sosStatus === 'active' && volPhase === 'safe' && (
             <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', background: '#D62828', color: '#fff', padding: '12px 24px', borderRadius: 'var(--r-full)', fontWeight: 700, fontSize: 15, boxShadow: '0 4px 20px rgba(214,40,40,0.5)', animation: 'fadeIn 0.5s ease', zIndex: 10 }}>
