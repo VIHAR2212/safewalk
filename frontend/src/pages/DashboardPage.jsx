@@ -5,7 +5,7 @@ import Navbar from '../components/ui/Navbar';
 import MapView from '../components/map/MapView';
 import SOSButton from '../components/sos/SOSButton';
 import VolunteerPanel from '../components/sos/VolunteerPanel';
-import RiskPanel from '../components/dashboard/RiskPanel';
+import RiskZoneMap from '../components/map/RiskZoneMap';
 import { useUserLocation } from '../hooks/useLocation';
 import api from '../services/api';
 
@@ -162,7 +162,7 @@ useEffect(() => {
 
           {/* Panel tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)' }}>
-            {['risk', 'sos'].map(p => (
+           {['risk', 'sos', 'zones'].map(p => (
               <button key={p} onClick={() => setSidePanel(p)} style={{
                 flex: 1, padding: '10px', border: 'none', background: 'transparent',
                 borderBottom: sidePanel === p ? '2px solid var(--accent)' : '2px solid transparent',
@@ -171,7 +171,7 @@ useEffect(() => {
                 cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.5,
                 transition: 'color var(--t-fast)',
               }}>
-                {p === 'risk' ? '⚠ Risk' : '🚨 Response'}
+                {p === 'risk' ? '⚠ Risk' : p === 'sos' ? '🚨 Response' : '🗺 Zones'}
               </button>
             ))}
           </div>
@@ -179,7 +179,11 @@ useEffect(() => {
           {/* Panel content */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px' }}>
             {sidePanel === 'risk' && <RiskPanel />}
-            {sidePanel === 'sos' && (
+            {sidePanel === 'zones' && (
+  <div style={{ margin: '-16px', height: 'calc(100% + 32px)' }}>
+    <RiskZoneMap userLocation={location} />
+  </div>
+)}
               sosStatus === 'active'
                 ? <VolunteerPanel volunteers={volunteers} phase={volPhase} />
                 : (
