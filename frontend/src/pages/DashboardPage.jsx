@@ -191,7 +191,6 @@ useEffect(() => {
                     <Activity size={32} style={{ marginBottom: 12, opacity: 0.4 }} />
                     <p style={{ fontSize: 13 }}>No active emergency. Hold the SOS button if you need help.</p>
                   </div>
-                )
             )}
           </div>
         </aside>
