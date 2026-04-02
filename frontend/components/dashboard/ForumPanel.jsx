@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, MapPin, ShieldCheck, User } from 'lucide-react';
 
+
 // 1. Define the Localities (Center Coordinates)
 const MUMBAI_LOCALITIES = [
   { name: 'Colaba', lat: 18.920, lng: 72.830, noSplit: true },
