@@ -36,7 +36,6 @@ router.get('/risk-zones', authMiddleware, getNearbyZones);
 router.post('/risk-zones/report', authMiddleware, reportZone);
 router.post('/risk-zones/check-entry', authMiddleware, checkZoneEntry);
 // Forum
-router.get('/forum/:locality', authMiddleware, getForumPosts);
-router.post('/forum', authMiddleware, createForumPost);
-
+router.get('/forum/:locality', getForumPosts);
+router.post('/forum', createForumPost);
 export default router;
