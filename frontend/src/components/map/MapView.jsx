@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import {useEffect, useRef } from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import { useEffect, useRef, useState } from 'react';
 
 const DARK_TILES  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
@@ -118,6 +119,52 @@ export default function MapView({
   const arrivedRef         = useRef(0);
   const LRef               = useRef(null);
   const zoneLayersRef      = useRef([]);
+  const [reportMode, setReportMode] = useState(false);
+const [reportPos, setReportPos]   = useState(null);
+const [reportName, setReportName] = useState('');
+const [reportDesc, setReportDesc] = useState('');
+const [riskLevel, setRiskLevel]   = useState('moderate');
+const reportModeRef = useRef(false);
+const reportPinRef  = useRef(null);
+  const zoneLayersRef      = useRef([]);
+
+// ── Report zone state ──────────────────────────────────────────────────────
+const [reportMode, setReportMode] = useState(false);
+const [reportPos, setReportPos]   = useState(null);
+const [reportName, setReportName] = useState('');
+const [reportDesc, setReportDesc] = useState('');
+const [riskLevel, setRiskLevel]   = useState('moderate');
+const reportModeRef = useRef(false);
+const reportPinRef  = useRef(null);
+
+// Keep ref in sync with state
+useEffect(() => { reportModeRef.current = reportMode; }, [reportMode]);
+
+// Submit report
+const submitReport = async () => {
+  if (!reportPos) return;
+  try {
+    const api = (await import('../../services/api')).default;
+    await api.post('/risk-zones/report', {
+      lat: reportPos.lat, lng: reportPos.lng,
+      name: reportName, description: reportDesc, riskLevel,
+    });
+    const L = LRef.current;
+    const map = mapRef.current;
+    const c = ZONE_COLORS[riskLevel];
+    const circle = L.circle([reportPos.lat, reportPos.lng], {
+      radius: riskLevel === 'high' ? 300 : riskLevel === 'moderate' ? 250 : 200,
+      color: c.stroke, fillColor: c.fill, fillOpacity: 1, weight: 2,
+    }).addTo(map);
+    zoneLayersRef.current.push(circle);
+    setReportMode(false);
+    setReportPos(null);
+    setReportName('');
+    setReportDesc('');
+    if (reportPinRef.current) { reportPinRef.current.remove(); reportPinRef.current = null; }
+  } catch { console.error('Report failed'); }
+};
+
 
   // Init map
   useEffect(() => {
@@ -159,6 +206,29 @@ export default function MapView({
 
       tileLayerRef.current = tiles;
       mapRef.current = map;
+      map.on('click', async (e) => {
+  if (!reportModeRef.current) return;
+  const { lat, lng } = e.latlng;
+
+  // Remove old pin
+  if (reportPinRef.current) reportPinRef.current.remove();
+
+  // Add pin
+  const el = document.createElement('div');
+  el.style.cssText = 'width:14px;height:14px;background:#E85D04;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(232,93,4,0.3)';
+  const pinIcon = LRef.current.divIcon({ html: el, className: '', iconSize: [14,14], iconAnchor: [7,7] });
+  reportPinRef.current = LRef.current.marker([lat, lng], { icon: pinIcon }).addTo(map);
+
+  setReportPos({ lat, lng });
+
+  // Auto-detect name
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+    const data = await res.json();
+    const a = data.address;
+    setReportName(a.road || a.neighbourhood || a.suburb || a.city_district || 'Unknown Area');
+  } catch { setReportName('Unknown Area'); }
+});
     });
   }, []); // eslint-disable-line
 
@@ -364,11 +434,90 @@ export default function MapView({
   }, []);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 0 }}>
-      <div
-        ref={containerRef}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-      />
-    </div>
-  );
+  <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 0 }}>
+    <div
+      ref={containerRef}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+    />
+
+    {/* Report Zone button — only visible when zones tab is active */}
+    {showZones && (
+      <button
+        onClick={() => setReportMode(r => !r)}
+        style={{
+          position: 'absolute', bottom: 80, right: 16, zIndex: 1000,
+          background: reportMode ? '#D62828' : 'var(--bg-surface, #1A1A1A)',
+          border: `1px solid ${reportMode ? '#D62828' : 'rgba(255,255,255,0.1)'}`,
+          borderRadius: 10, padding: '10px 14px', cursor: 'pointer',
+          color: reportMode ? '#fff' : '#F5F5F5',
+          display: 'flex', alignItems: 'center', gap: 6,
+          fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, fontWeight: 500,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+        }}
+      >
+        {reportMode ? '✕ Cancel' : '＋ Report Zone'}
+      </button>
+    )}
+
+    {/* Instruction when in report mode */}
+    {showZones && reportMode && !reportPos && (
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        background: 'rgba(13,13,13,0.92)', border: '1px solid rgba(232,93,4,0.4)',
+        borderRadius: 12, padding: '14px 20px', zIndex: 1000,
+        textAlign: 'center', pointerEvents: 'none',
+      }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F5', margin: 0 }}>👆 Tap anywhere on the map</p>
+        <p style={{ fontSize: 12, color: '#A0A0A0', margin: '4px 0 0' }}>to mark the risk zone location</p>
+      </div>
+    )}
+
+    {/* Report form after location selected */}
+    {showZones && reportMode && reportPos && (
+      <div style={{
+        position: 'absolute', bottom: 130, right: 16, zIndex: 1001,
+        background: 'rgba(13,13,13,0.96)', backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: 14, padding: 16, width: 240,
+        display: 'flex', flexDirection: 'column', gap: 10,
+      }}>
+        <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: '#F5F5F5' }}>
+          📍 {reportName || 'Location selected'}
+        </p>
+        <input
+          placeholder="Zone name (auto-detected)"
+          value={reportName}
+          onChange={e => setReportName(e.target.value)}
+          style={{ background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 10px', color: '#F5F5F5', fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, outline: 'none' }}
+        />
+        <input
+          placeholder="Description (optional)"
+          value={reportDesc}
+          onChange={e => setReportDesc(e.target.value)}
+          style={{ background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 10px', color: '#F5F5F5', fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, outline: 'none' }}
+        />
+        <div style={{ display: 'flex', gap: 6 }}>
+          {['high', 'moderate', 'low'].map(level => (
+            <button key={level} onClick={() => setRiskLevel(level)} style={{
+              flex: 1, padding: '7px 4px', border: 'none', borderRadius: 8, cursor: 'pointer',
+              background: riskLevel === level
+                ? level === 'high' ? '#D62828' : level === 'moderate' ? '#E85D04' : '#22c55e'
+                : '#1A1A1A',
+              color: '#fff', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, fontWeight: 600,
+            }}>
+              {level === 'high' ? '🔴' : level === 'moderate' ? '🟡' : '🟢'}
+            </button>
+          ))}
+        </div>
+        <button onClick={submitReport} style={{
+          background: '#E85D04', border: 'none', borderRadius: 8, padding: '10px',
+          color: '#fff', fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+        }}>
+          ✓ Submit Report
+        </button>
+      </div>
+    )}
+  </div>
+);
 }
