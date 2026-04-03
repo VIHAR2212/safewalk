@@ -1,5 +1,4 @@
-import supabase from '../config/supabase.js'; // Note: If this throws an error later, change to: import { supabase } from '../config/supabase.js';
-
+import { supabase } from '../config/supabase.js';
 // 1. GET all posts for a specific locality
 export const getForumPosts = async (req, res) => {
   try {
