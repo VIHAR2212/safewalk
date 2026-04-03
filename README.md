@@ -36,50 +36,69 @@ SafeWalk is designed with a decoupled, modern architecture, optimized for reliab
 * **Backend Hosting (Render):** The Node.js and Express REST API is hosted on Render as a web service. Render provides a highly reliable, always-on environment to handle critical SOS triggers, calculate volunteer distances, and securely interface with the Supabase PostgreSQL database using server-side secrets.
 
 ---
-
-## 📁 Folder Structure
-
-```text
+## 📁 Folder Structure 
 safewalk/
 ├── backend/
 │   ├── src/
-│   │   ├── config/supabase.js        ← Supabase client
+│   │   ├── config/
+│   │   │   └── supabase.js             ← Supabase client connection setup
 │   │   ├── controllers/
-│   │   │   ├── authController.js     ← Register, login, demo
-│   │   │   ├── sosController.js      ← SOS trigger, resolve, active
-│   │   │   └── volunteerController.js← Availability, location
-│   │   ├── middleware/auth.js        ← JWT verify, role guard
-│   │   ├── routes/index.js           ← All API routes
-│   │   └── index.js                  ← Express app entry
-│   ├── schema.sql                    ← Run in Supabase SQL editor
-│   ├── package.json
-│   └── .env.example
+│   │   │   ├── authController.js       ← Handles user/volunteer login and registration
+│   │   │   ├── forumController.js      ← Handles local safety forum API (GET/POST)
+│   │   │   ├── riskZoneController.js   ← Logic for fetching and checking risk zones
+│   │   │   ├── sosController.js        ← Manages active emergencies and SOS dispatch
+│   │   │   └── volunteerController.js  ← Updates volunteer location and availability
+│   │   ├── middleware/
+│   │   │   └── auth.js                 ← JWT verification and role-based access guard
+│   │   ├── routes/
+│   │   │   └── index.js                ← Express API routing hub
+│   │   └── index.js                    ← Main Node.js/Express server entry point
+│   ├── .env                            ← Backend environment variables (ignored in git)
+│   ├── .env.example                    ← Template for backend env variables
+│   ├── package-lock.json
+│   ├── package.json                    ← Backend dependencies
+│   └── schema.sql                      ← Supabase DB schema and mass seed data
 │
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   │   ├── map/MapView.jsx        ← Mapbox, dark/light, volunteer animation
-    │   │   ├── sos/SOSButton.jsx      ← Hold-to-trigger SOS
-    │   │   ├── sos/VolunteerPanel.jsx ← Dispatched volunteer cards
-    │   │   ├── dashboard/RiskPanel.jsx← Mock risk zones + safe routes
-    │   │   └── ui/Navbar.jsx          ← Nav with theme toggle
-    │   ├── context/
-    │   │   ├── AuthContext.jsx        ← Global auth state
-    │   │   └── ThemeContext.jsx       ← Dark/light mode
-    │   ├── hooks/useLocation.js       ← Browser geolocation
-    │   ├── pages/
-    │   │   ├── LoginPage.jsx          ← Email / phone / demo login
-    │   │   ├── DashboardPage.jsx      ← Main user dashboard
-    │   │   └── VolunteerPage.jsx      ← Volunteer control panel
-    │   ├── services/api.js            ← Axios with JWT interceptor
-    │   ├── App.jsx                    ← Routes + protected routes
-    │   ├── main.jsx
-    │   └── index.css                  ← Design tokens (black/orange/red)
-    ├── index.html
-    ├── vite.config.js
-    ├── package.json
-    └── .env.example
-```
+├── frontend/
+│   ├── src/
+│   │   ├── assets/                     ← Static images, SVGs, and icons
+│   │   ├── components/
+│   │   │   ├── dashboard/
+│   │   │   │   ├── ForumPanel.jsx      ← UI for the local community safety forum
+│   │   │   │   └── RiskPanel.jsx       ← UI displaying nearby mock risk zones
+│   │   │   ├── map/
+│   │   │   │   ├── MapView.jsx         ← Main Mapbox GL JS map interface
+│   │   │   │   └── RiskZoneMap.jsx     ← Specialized map overlay for risk zones
+│   │   │   ├── sos/
+│   │   │   │   ├── SOSButton.jsx       ← The central hold-to-trigger SOS button
+│   │   │   │   └── VolunteerPanel.jsx  ← Displays dispatched volunteer information
+│   │   │   └── ui/
+│   │   │       ├── LoadingScreen.jsx   ← App loading state UI
+│   │   │       └── Navbar.jsx          ← Top navigation and dark/light theme toggle
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx         ← Global React context for user state
+│   │   │   └── ThemeContext.jsx        ← Global React context for theming
+│   │   ├── hooks/
+│   │   │   └── useLocation.js          ← Custom hook for browser geolocation API
+│   │   ├── pages/
+│   │   │   ├── DashboardPage.jsx       ← Main map and control screen for users
+│   │   │   ├── LoginPage.jsx           ← Authentication and demo login screen
+│   │   │   └── VolunteerPage.jsx       ← Control panel and stats for active volunteers
+│   │   ├── services/
+│   │   │   └── api.js                  ← Axios instance with JWT interceptors
+│   │   ├── App.jsx                     ← Main React component and route definitions
+│   │   ├── index.css                   ← Global styles and design tokens
+│   │   └── main.jsx                    ← React DOM entry point
+│   ├── .env.example                    ← Template for frontend env variables
+│   ├── index.html                      ← Main HTML template
+│   ├── package-lock.json
+│   ├── package.json                    ← Frontend dependencies (Vite, React, Mapbox)
+│   ├── vercel.json                     ← Vercel deployment and routing configuration
+│   └── vite.config.js                  ← Vite bundler configuration
+│
+└── README.md                           ← Project documentation
+
+
 ---
 
 ## 🔑 Usage & Login
