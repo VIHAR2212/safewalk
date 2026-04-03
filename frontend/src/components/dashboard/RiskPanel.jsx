@@ -1,9 +1,9 @@
 import { AlertTriangle, TrendingUp, MapPin } from 'lucide-react';
 
 const RISK_ZONES = [
-  { name: 'Vidhyavardhini college road', risk: 'high', time: '10PM–2AM', color: '#D62828' },
-  { name: 'Vasai Station', risk: 'medium', time: '8PM–12AM', color: '#E85D04' },
-  { name: 'KT Marg', risk: 'low', time: 'All day', color: '#22c55e' },
+  { name: 'Vasai Station', risk: 'high', time: '10PM–2AM', color: '#D62828' },
+  { name: 'KT marg', risk: 'medium', time: '8PM–12AM', color: '#E85D04' },
+  { name: 'Vidhyavardhini college road', risk: 'low', time: 'All day', color: '#22c55e' },
   { name: 'VASAI LINK ROAD', risk: 'low', time: 'All day', color: '#22c55e' },
 ];
 
