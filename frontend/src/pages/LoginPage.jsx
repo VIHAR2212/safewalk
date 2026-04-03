@@ -138,7 +138,6 @@ export default function LoginPage() {
             {tab === 'phone' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ background: 'var(--bg-raised)', borderRadius: 'var(--r-md)', padding: '14px 16px', fontSize: 13, color: 'var(--fg-muted)', lineHeight: 1.6 }}>
-                  📱 Enable Phone Auth in <strong style={{ color: 'var(--fg)' }}>Supabase → Authentication → Providers → Phone</strong>
                 </div>
                 <div style={{ position: 'relative' }}>
                   <Phone size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
@@ -153,11 +152,11 @@ export default function LoginPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <p style={{ fontSize: 13, color: 'var(--fg-muted)', textAlign: 'center', margin: 0 }}>Login instantly with a demo account</p>
                 <button style={{ ...BTN_OUTLINE, borderColor: 'var(--accent)', color: 'var(--accent)', padding: '13px' }} onClick={() => handleSubmit('user')}>
-                  <img src={logoImg} alt="" style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }} />
+                  <alt="" style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }} />
                   Demo User Account
                 </button>
                 <button style={{ ...BTN_OUTLINE, padding: '13px' }} onClick={() => handleSubmit('volunteer')}>
-                  <img src={logoImg} alt="" style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }} />
+                  <alt="" style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }} />
                   Demo Volunteer Account
                 </button>
                 <p style={{ fontSize: 12, color: 'var(--fg-muted)', textAlign: 'center', margin: 0 }}>
@@ -168,7 +167,7 @@ export default function LoginPage() {
           </div>
 
           <p style={{ textAlign: 'center', color: 'var(--fg-muted)', fontSize: 12, marginTop: 20 }}>
-            Your location is only shared during an SOS. We never track you otherwise.
+            Your location is only shared during an SOS. 
           </p>
         </div>
       </div>
