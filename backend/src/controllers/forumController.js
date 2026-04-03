@@ -1,5 +1,6 @@
-import supabase from '../config/supabase.js'; 
+import supabase from '../config/supabase.js'; // Note: If this throws an error later, change to: import { supabase } from '../config/supabase.js';
 
+// 1. GET all posts for a specific locality
 export const getForumPosts = async (req, res) => {
   try {
     const { locality } = req.params;
@@ -18,6 +19,7 @@ export const getForumPosts = async (req, res) => {
   }
 };
 
+// 2. POST a new message to a locality
 export const createForumPost = async (req, res) => {
   try {
     const { locality, author_name, author_role, content } = req.body;
