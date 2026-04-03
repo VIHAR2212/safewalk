@@ -1,12 +1,32 @@
 # 🛡️ SafeWalk — Real-Time Personal Safety Platform
 
-> Full-stack web app: React + Node/Express + Supabase + Mapbox GL JS
+> A privacy-first, full-stack web application designed to provide real-time assistance and geographic safety awareness. Built with React, Node/Express, Supabase, and Mapbox GL JS.
+
+---
+
+## ✨ Key Features
+
+* **Real-Time SOS Dispatch:** A hold-to-trigger SOS button that instantly alerts the system and dispatches nearby volunteers.
+* **Live Volunteer Tracking:** During an emergency, users receive dispatched volunteer cards and can see their live approach on the map.
+* **Risk Zone Awareness:** A dedicated dashboard panel displaying mock risk zones and safe navigational routes.
+* **Privacy-First Architecture:** Location data is never continuously tracked; it is only shared with the backend during an active SOS, and volunteer locations are never exposed until they accept a dispatch.
+* **Role-Based Access Control:** Secure JWT authentication separating standard users from verified community volunteers.
+* **Adaptive UI:** A sleek, accessible interface featuring a seamless dark/light mode toggle integrated with the interactive Mapbox interface.
+
+---
+
+## 🌍 Deployment Architecture
+
+SafeWalk is designed with a decoupled, modern architecture, optimized for reliable cloud hosting:
+
+* **Frontend Hosting (Vercel):** The React (Vite) frontend is deployed on Vercel. This provides blazing-fast edge caching for the user interface, automated CI/CD directly from GitHub, and secure client-side management of environment variables like the Mapbox tokens.
+* **Backend Hosting (Render):** The Node.js and Express REST API is hosted on Render as a web service. Render provides a highly reliable, always-on environment to handle critical SOS triggers, calculate volunteer distances, and securely interface with the Supabase PostgreSQL database using server-side secrets.
 
 ---
 
 ## 📁 Folder Structure
 
-```
+```text
 safewalk/
 ├── backend/
 │   ├── src/
@@ -15,7 +35,7 @@ safewalk/
 │   │   │   ├── authController.js     ← Register, login, demo
 │   │   │   ├── sosController.js      ← SOS trigger, resolve, active
 │   │   │   └── volunteerController.js← Availability, location
-│   │   ├── middleware/auth.js         ← JWT verify, role guard
+│   │   ├── middleware/auth.js        ← JWT verify, role guard
 │   │   ├── routes/index.js           ← All API routes
 │   │   └── index.js                  ← Express app entry
 │   ├── schema.sql                    ← Run in Supabase SQL editor
@@ -29,7 +49,7 @@ safewalk/
     │   │   ├── sos/SOSButton.jsx      ← Hold-to-trigger SOS
     │   │   ├── sos/VolunteerPanel.jsx ← Dispatched volunteer cards
     │   │   ├── dashboard/RiskPanel.jsx← Mock risk zones + safe routes
-    │   │   └── ui/Navbar.jsx         ← Nav with theme toggle
+    │   │   └── ui/Navbar.jsx          ← Nav with theme toggle
     │   ├── context/
     │   │   ├── AuthContext.jsx        ← Global auth state
     │   │   └── ThemeContext.jsx       ← Dark/light mode
@@ -47,67 +67,15 @@ safewalk/
     ├── package.json
     └── .env.example
 ```
-
 ---
 
-## ⚙️ Prerequisites
+## 🔑 Usage & Login
 
-- Node.js 18+
-- A free [Supabase](https://supabase.com) account
-- A free [Mapbox](https://mapbox.com) account (public token)
+Once the application is deployed, you can easily test the platform's roles using the built-in demo credentials:
 
----
-
-## 🚀 Setup in 5 Steps
-
-### Step 1 — Supabase Setup
-
-1. Create a new project at https://supabase.com
-2. Go to **SQL Editor** → paste the contents of `backend/schema.sql` → Run
-3. Copy your **Project URL** and **service_role key** from:
-   Settings → API → Project URL + service_role secret
-
-### Step 2 — Mapbox Token
-
-1. Create account at https://mapbox.com
-2. Copy your **Default public token** from the Tokens page
-
-### Step 3 — Backend Setup
-
-```bash
-cd backend
-cp .env.example .env
-# Fill in your values:
-# SUPABASE_URL=https://xxxx.supabase.co
-# SUPABASE_SERVICE_KEY=eyJ...
-# JWT_SECRET=any-random-32-char-string
-
-npm install
-npm run dev
-# ✅ Running on http://localhost:5000
-```
-
-### Step 4 — Frontend Setup
-
-```bash
-cd frontend
-cp .env.example .env
-# Fill in:
-# VITE_MAPBOX_TOKEN=pk.eyJ...
-# VITE_API_URL=http://localhost:5000/api
-
-npm install
-npm run dev
-# ✅ Running on http://localhost:3000
-```
-
-### Step 5 — Login
-
-Open http://localhost:3000
-
-- **Demo User**: Click "Demo" tab → "Demo User Account"
-- **Demo Volunteer**: Click "Demo" tab → "Demo Volunteer Account"
-- **Register**: Click "Email" tab → Register link
+1. **Demo User**: Navigate to the login screen, click the "Demo" tab, and select "Demo User Account".
+2. **Demo Volunteer**: Navigate to the login screen, click the "Demo" tab, and select "Demo Volunteer Account".
+3. **New Registration**: Click the "Email" tab and use the Register link to create a fresh account.
 
 ---
 
@@ -130,6 +98,8 @@ Open http://localhost:3000
 
 ## 🎨 Design System
 
+SafeWalk uses a high-contrast, accessible design system tailored for high-stress emergency situations.
+
 | Token | Value |
 |-------|-------|
 | Background | `#0D0D0D` (dark) / `#F5F5F5` (light) |
@@ -143,33 +113,10 @@ Open http://localhost:3000
 
 ## 🔒 Privacy Design
 
-- User location is **never continuously tracked**
-- Location is only sent to backend when SOS is triggered
-- Volunteer locations are **not exposed to users** until SOS
-- Only selected 2–3 volunteers see the user's location
-- JWT auth on all protected routes
-
----
-
-## 🧩 Extending the App
-
-| Feature | Where |
-|---------|-------|
-| Real SMS alerts | `backend/src/controllers/sosController.js` → `mockNotify()` |
-| WhatsApp (Twilio) | Install `twilio`, replace `mockNotify` |
-| Google OAuth | Supabase Auth → Providers → Google |
-| Phone OTP | Supabase Auth → Providers → Phone |
-| Real heatmap data | `frontend/src/components/dashboard/RiskPanel.jsx` |
-| Push notifications | Add Firebase Cloud Messaging |
-
----
-
-## 🐛 Troubleshooting
-
-**Map is blank** → Check `VITE_MAPBOX_TOKEN` in frontend `.env`
-
-**Login fails** → Run `schema.sql` in Supabase SQL editor first
-
-**CORS error** → Check `FRONTEND_URL` in backend `.env` matches your frontend port
-
-**Demo accounts missing** → The seed inserts in `schema.sql` use `ON CONFLICT DO NOTHING`. Run the SQL again if needed.
+Protecting user data is the core foundation of SafeWalk:
+* User location is **never continuously tracked**.
+* Location is only transmitted to the backend the moment an SOS is triggered.
+* Volunteer locations are **not exposed to users** until they are actively dispatched to an SOS.
+* Only a highly restricted selection of 2–3 nearby volunteers receive the user's location.
+* Strict JWT authentication guards all protected routes and API endpoints.
+  
