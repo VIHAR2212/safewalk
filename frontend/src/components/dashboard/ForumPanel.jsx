@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, MapPin, ShieldCheck, User } from 'lucide-react';
+import api from '../../services/api'; 
 
-
-// 1. Define the Localities (Center Coordinates)
 const MUMBAI_LOCALITIES = [
   { name: 'Colaba', lat: 18.920, lng: 72.830, noSplit: true },
   { name: 'Worli', lat: 19.000, lng: 72.815, noSplit: true },
   { name: 'Powai', lat: 19.120, lng: 72.900, noSplit: true },
   { name: 'Mira Bhayandar', lat: 19.290, lng: 72.850, noSplit: true },
   { name: 'Chembur', lat: 19.050, lng: 72.895, noSplit: true },
-  // East/West Splittable Localities
   { name: 'Dadar', lat: 19.020, lng: 72.840 },
   { name: 'Bandra', lat: 19.050, lng: 72.835 },
   { name: 'Kurla', lat: 19.070, lng: 72.880 },
@@ -24,10 +22,8 @@ const MUMBAI_LOCALITIES = [
   { name: 'Thane', lat: 19.200, lng: 72.970 }
 ];
 
-// 2. Find closest locality + East/West math
 const getLocality = (lat, lng) => {
   if (!lat || !lng) return "Mumbai General";
-  // Bounding box for Mumbai limits
   if (lat < 18.85 || lat > 19.35 || lng < 72.75 || lng > 73.10) return "Mumbai General";
 
   let closest = MUMBAI_LOCALITIES[0];
@@ -41,85 +37,70 @@ const getLocality = (lat, lng) => {
   if (closest.noSplit) return closest.name;
   return `${closest.name} ${lng < closest.lng ? 'West' : 'East'}`;
 };
-
-// 3. Dynamic Mock Data Generator (Keeps file size small!)
-const generateMockPosts = (locality) => {
-  const names = ["Rahul", "Priya S.", "Amit", "Sneha", "Vikram", "Neha", "Karan"];
-  const scenarios = [
-    `Streetlights are out near the main market in ${locality}. Be careful walking alone!`,
-    `I'm patrolling the station area. Let me know if anyone needs an escort.`,
-    `Heavy waterlogging reported on the main road, take the flyover.`,
-    `Is the shortcut near the park safe right now?`,
-    `Just saw a group of aggressive stray dogs near the ATM. Watch out.`,
-    `I can verify that the park shortcut is well-lit and safe tonight.`,
-    `Avoid the subway, there is a lot of crowd due to train delays.`
-  ];
-  
-  return scenarios.map((text, i) => ({
-    id: `mock-${i}`,
-    locality: locality,
-    author: names[i % names.length],
-    role: i % 2 === 1 ? 'volunteer' : 'user',
-    time: `${(i + 1) * 12}m ago`,
-    content: text
-  })).reverse();
-};
 export default function ForumPanel({ userLocation, userRole = "user", userName = "You" }) {
   const [locality, setLocality] = useState("Locating...");
   const [feed, setFeed] = useState([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
 
+  const fetchPosts = async (currentLocality) => {
+    try {
+      const res = await api.get(`/forum/${currentLocality}`);
+      setFeed(res.data);
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // 1. Figure out where we are
     const currentLocality = userLocation 
       ? getLocality(userLocation.lat, userLocation.lng) 
       : "Mumbai General";
       
     setLocality(currentLocality);
-    
-    // 2. Load our generated Mocks
-    const baseMocks = generateMockPosts(currentLocality);
-    
-    // 3. Look in LocalStorage to see if we saved any custom messages here before
-    const savedKey = `safewalk_forum_${currentLocality.replace(/\s/g, '_')}`;
-    const savedPosts = JSON.parse(localStorage.getItem(savedKey)) || [];
-
-    // Combine them (Mocks first, then our real saved messages at the bottom)
-    setFeed([...baseMocks, ...savedPosts]);
+    setLoading(true);
+    fetchPosts(currentLocality);
   }, [userLocation]);
 
   useEffect(() => {
-    // Auto-scroll to latest message
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [feed]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const newPost = {
-      id: Date.now().toString(),
       locality: locality,
-      author: userName,
-      role: userRole,
-      time: "Just now",
+      author_name: userName,
+      author_role: userRole,
       content: input.trim()
     };
 
-    const updatedFeed = [...feed, newPost];
-    setFeed(updatedFeed);
+    // Optimistic UI update (shows instantly before server confirms)
+    const optimisticPost = { ...newPost, id: Date.now().toString(), created_at: new Date().toISOString() };
+    setFeed([...feed, optimisticPost]);
     setInput("");
 
-    // MAGIC: Save just the user's custom messages to LocalStorage!
-    const savedKey = `safewalk_forum_${locality.replace(/\s/g, '_')}`;
-    const existingSaved = JSON.parse(localStorage.getItem(savedKey)) || [];
-    localStorage.setItem(savedKey, JSON.stringify([...existingSaved, newPost]));
+    try {
+      await api.post('/forum', newPost);
+      fetchPosts(locality); // Fetch fresh from server to get real IDs
+    } catch (error) {
+      console.error("Failed to send post:", error);
+    }
   };
-    return (
+    const formatTime = (isoString) => {
+    if (!isoString) return 'Just now';
+    const date = new Date(isoString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', margin: '-16px' }}>
       
-      {/* Forum Header */}
       <div style={{ padding: '16px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(232,93,4,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <MapPin size={18} color="var(--accent)" />
@@ -130,29 +111,33 @@ export default function ForumPanel({ userLocation, userRole = "user", userName =
         </div>
       </div>
 
-      {/* Chat Feed */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {feed.map(post => (
-          <div key={post.id} style={{ 
-            background: post.author === userName ? 'rgba(232,93,4,0.1)' : (post.role === 'volunteer' ? 'rgba(34, 197, 94, 0.08)' : 'var(--bg-raised)'), 
-            border: post.author === userName ? '1px solid rgba(232,93,4,0.3)' : (post.role === 'volunteer' ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid var(--border-color)'), 
-            padding: '12px', borderRadius: '12px',
-            alignSelf: post.author === userName ? 'flex-end' : 'flex-start',
-            width: '85%'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, color: post.role === 'volunteer' ? '#22c55e' : (post.author === userName ? 'var(--accent)' : 'var(--fg)') }}>
-                {post.role === 'volunteer' ? <ShieldCheck size={14} /> : <User size={14} />}
-                {post.author}
-              </span>
-              <span style={{ fontSize: 10, color: 'var(--fg-muted)' }}>{post.time}</span>
+        {loading ? (
+          <p style={{ textAlign: 'center', color: 'var(--fg-muted)', fontSize: 12, marginTop: 20 }}>Loading local updates...</p>
+        ) : feed.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--fg-muted)', fontSize: 12, marginTop: 20 }}>No updates in your area yet. Be the first to report!</p>
+        ) : (
+          feed.map(post => (
+            <div key={post.id} style={{ 
+              background: post.author_name === userName ? 'rgba(232,93,4,0.1)' : (post.author_role === 'volunteer' ? 'rgba(34, 197, 94, 0.08)' : 'var(--bg-raised)'), 
+              border: post.author_name === userName ? '1px solid rgba(232,93,4,0.3)' : (post.author_role === 'volunteer' ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid var(--border-color)'), 
+              padding: '12px', borderRadius: '12px',
+              alignSelf: post.author_name === userName ? 'flex-end' : 'flex-start',
+              width: '85%'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, color: post.author_role === 'volunteer' ? '#22c55e' : (post.author_name === userName ? 'var(--accent)' : 'var(--fg)') }}>
+                  {post.author_role === 'volunteer' ? <ShieldCheck size={14} /> : <User size={14} />}
+                  {post.author_name}
+                </span>
+                <span style={{ fontSize: 10, color: 'var(--fg-muted)' }}>{formatTime(post.created_at)}</span>
+              </div>
+              <p style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--fg-muted)', margin: 0 }}>{post.content}</p>
             </div>
-            <p style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--fg-muted)', margin: 0 }}>{post.content}</p>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {/* Input Area */}
       <form onSubmit={handleSend} style={{ padding: '12px', borderTop: '1px solid var(--border-color)', background: 'var(--bg-surface)', display: 'flex', gap: 8 }}>
         <input 
           type="text" 
