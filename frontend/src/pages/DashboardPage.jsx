@@ -218,10 +218,13 @@ export default function DashboardPage() {
             {sidePanel === 'risk' && <RiskPanel />}
             {sidePanel === 'forum' && <ForumPanel userLocation={location} userRole="user" userName="Demo User" />}
             {sidePanel === 'zones' && (
-              <div style={{ position: 'absolute', inset: 0 }}>
-                <RiskZoneMap userLocation={location} />
-              </div>
-            )}
+  <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
+    <p style={{ fontSize: 24, marginBottom: 12 }}>🗺️</p>
+    <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)' }}>Risk Zones Active</p>
+    <p style={{ fontSize: 13, marginTop: 8 }}>Colored zones are now visible on the main map.</p>
+    <p style={{ fontSize: 12, marginTop: 4, color: 'var(--accent)' }}>🔴 High &nbsp; 🟡 Moderate &nbsp; 🟢 Safe</p>
+  </div>
+)}
             {sidePanel === 'sos' && (
               sosStatus === 'active' ? (
                 <VolunteerPanel volunteers={volunteers} phase={volPhase} />
@@ -236,13 +239,13 @@ export default function DashboardPage() {
         </aside>
 
         {/* Map */}
-        <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-          <MapView
-            userLocation={location}
-            volunteers={volunteers}
-            sosActive={sosStatus === 'active'}
-            onVolunteerArrived={handleVolunteerArrived}
-          />
+        <MapView
+  userLocation={location}
+  volunteers={volunteers}
+  sosActive={sosStatus === 'active'}
+  onVolunteerArrived={handleVolunteerArrived}
+  showZones={sidePanel === 'zones'}
+        />
 
           {/* Mobile hamburger */}
           {isMobile && (
