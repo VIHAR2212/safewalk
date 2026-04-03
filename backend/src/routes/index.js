@@ -9,6 +9,8 @@ import {
 } from '../controllers/volunteerController.js';
 import { getNearbyZones, reportZone, checkZoneEntry } from '../controllers/riskZoneController.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
+import { getForumPosts, createForumPost } from '../controllers/forumController.js';
+
 
 const router = express.Router();
 
@@ -33,5 +35,8 @@ router.get('/volunteers/profile', authMiddleware, requireRole('volunteer'), getM
 router.get('/risk-zones', authMiddleware, getNearbyZones);
 router.post('/risk-zones/report', authMiddleware, reportZone);
 router.post('/risk-zones/check-entry', authMiddleware, checkZoneEntry);
+// Forum
+router.get('/forum/:locality', authMiddleware, getForumPosts);
+router.post('/forum', authMiddleware, createForumPost);
 
 export default router;
