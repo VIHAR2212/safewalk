@@ -13,6 +13,19 @@
 * **Role-Based Access Control:** Secure JWT authentication separating standard users from verified community volunteers.
 * **Adaptive UI:** A sleek, accessible interface featuring a seamless dark/light mode toggle integrated with the interactive Mapbox interface.
 
+## 💻 Tech Stack
+
+| Category | Technology | Function in SafeWalk |
+| :--- | :--- | :--- |
+| **Core Languages** | **JavaScript (ES6+)** | The foundational programming language powering both the React frontend and the Node.js backend. |
+| **Markup & Style** | **HTML5 & CSS3** | Structures the web application and applies the custom CSS design tokens for the high-contrast emergency UI. |
+| **Frontend** | **React.js (Vite)** | Powers the reactive user interface, state management, and mobile-responsive dashboards. |
+| **Maps & Geospatial** | **Mapbox GL JS** | Renders the interactive dark/light maps, mock risk zones, and live volunteer tracking markers. |
+| **Backend API** | **Node.js & Express** | Handles the core business logic, SOS trigger routing, and secure JWT verification. |
+| **Database & Auth** | **Supabase** | Serves as the PostgreSQL database for users, volunteers, and forum posts. Manages Row Level Security (RLS). |
+| **Frontend Deployment**| **Vercel** | Hosts the React frontend on a blazing-fast global edge network with automated CI/CD from GitHub. |
+| **Backend Deployment** | **Render** | Hosts the Express backend as a continuous web service to ensure 24/7 uptime for emergency SOS requests. |
+
 ---
 
 ## 🌍 Deployment Architecture
