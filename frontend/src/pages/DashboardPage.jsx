@@ -5,7 +5,6 @@ import Navbar from '../components/ui/Navbar';
 import MapView from '../components/map/MapView';
 import SOSButton from '../components/sos/SOSButton';
 import RiskPanel from '../components/dashboard/RiskPanel';
-import RiskZoneMap from '../components/map/RiskZoneMap';
 import VolunteerPanel from '../components/sos/VolunteerPanel';
 import ForumPanel from '../components/dashboard/ForumPanel';
 import { useUserLocation } from '../hooks/useLocation';
@@ -61,8 +60,8 @@ export default function DashboardPage() {
         isVerified: a.volunteers?.is_verified,
         rating: a.volunteers?.rating,
         distance: '?',
-        currentLat: a.volunteers?.last_lat || 21.1458,
-        currentLng: a.volunteers?.last_lng || 79.0882,
+        currentLat: a.volunteers?.last_lat || 19.0760,
+        currentLng: a.volunteers?.last_lng || 72.8777,
       }));
       setVolunteers(vols);
     }).catch(() => {});
@@ -80,7 +79,7 @@ export default function DashboardPage() {
       setVolPhase('dispatched');
       setSidePanel('sos');
       if (!vols || vols.length === 0) {
-        toast(message || 'No volunteers nearby. Stay safe — authorities alerted.', { icon: '⚠️', duration: 6000 });
+        toast(message || 'No volunteers nearby. Stay safe.', { icon: '⚠️', duration: 6000 });
       } else {
         toast.success(`SOS triggered! ${vols.length} volunteer(s) dispatched.`);
       }
@@ -94,8 +93,8 @@ export default function DashboardPage() {
   const setVolunteerList = (vols) => {
     setVolunteers((vols || []).map(v => ({
       ...v,
-      currentLat: v.currentLat || (location?.lat || 21.1458) + (Math.random() - 0.5) * 0.02,
-      currentLng: v.currentLng || (location?.lng || 79.0882) + (Math.random() - 0.5) * 0.02,
+      currentLat: v.currentLat || (location?.lat || 19.0760) + (Math.random() - 0.5) * 0.02,
+      currentLng: v.currentLng || (location?.lng || 72.8777) + (Math.random() - 0.5) * 0.02,
     })));
   };
 
@@ -182,7 +181,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* SOS button — only in sidebar on desktop */}
+          {/* SOS button — desktop only in sidebar */}
           {!isMobile && (
             <div style={{ padding: '28px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'center' }}>
               {sosLoading ? (
@@ -214,17 +213,27 @@ export default function DashboardPage() {
           </div>
 
           {/* Panel content */}
-          <div style={{ flex: 1, overflowY: sidePanel === 'zones' ? 'hidden' : 'auto', padding: sidePanel === 'zones' ? '0' : '16px', position: 'relative', minHeight: 0 }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', position: 'relative', minHeight: 0 }}>
             {sidePanel === 'risk' && <RiskPanel />}
             {sidePanel === 'forum' && <ForumPanel userLocation={location} userRole="user" userName="Demo User" />}
             {sidePanel === 'zones' && (
-  <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
-    <p style={{ fontSize: 24, marginBottom: 12 }}>🗺️</p>
-    <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)' }}>Risk Zones Active</p>
-    <p style={{ fontSize: 13, marginTop: 8 }}>Colored zones are now visible on the main map.</p>
-    <p style={{ fontSize: 12, marginTop: 4, color: 'var(--accent)' }}>🔴 High &nbsp; 🟡 Moderate &nbsp; 🟢 Safe</p>
-  </div>
-)}
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
+                <p style={{ fontSize: 32, marginBottom: 12 }}>🗺️</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)', marginBottom: 8 }}>Risk Zones Active</p>
+                <p style={{ fontSize: 13, marginBottom: 8 }}>Colored zones are visible on the main map.</p>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
+                  {[['🔴','High Risk','#D62828'],['🟡','Moderate','#E85D04'],['🟢','Safe','#22c55e']].map(([e,l,c])=>(
+                    <div key={l} style={{ display:'flex', alignItems:'center', gap:6, background:'var(--bg-raised)', padding:'6px 12px', borderRadius:20, border:`1px solid ${c}33` }}>
+                      <span>{e}</span>
+                      <span style={{ fontSize:12, color:'var(--fg)', fontWeight:600 }}>{l}</span>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 16 }}>
+                  Tap any circle on the map for details
+                </p>
+              </div>
+            )}
             {sidePanel === 'sos' && (
               sosStatus === 'active' ? (
                 <VolunteerPanel volunteers={volunteers} phase={volPhase} />
@@ -238,14 +247,17 @@ export default function DashboardPage() {
           </div>
         </aside>
 
-        {/* Map */}
-        <MapView
-  userLocation={location}
-  volunteers={volunteers}
-  sosActive={sosStatus === 'active'}
-  onVolunteerArrived={handleVolunteerArrived}
-  showZones={sidePanel === 'zones'}
-        />
+        {/* Main map area */}
+        <main style={{ flex: 1, position: 'relative', overflow: 'hidden', minWidth: 0 }}>
+
+          {/* Map */}
+          <MapView
+            userLocation={location}
+            volunteers={volunteers}
+            sosActive={sosStatus === 'active'}
+            onVolunteerArrived={handleVolunteerArrived}
+            showZones={sidePanel === 'zones'}
+          />
 
           {/* Mobile hamburger */}
           {isMobile && (
@@ -254,7 +266,7 @@ export default function DashboardPage() {
               style={{
                 position: 'absolute', top: 16, left: 16,
                 background: '#1A1A1A', border: '2px solid #E85D04',
-                borderRadius: '8px', padding: '10px', cursor: 'pointer',
+                borderRadius: 8, padding: 10, cursor: 'pointer',
                 color: '#E85D04', display: 'flex', alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.8)', zIndex: 500,
@@ -264,7 +276,7 @@ export default function DashboardPage() {
             </button>
           )}
 
-          {/* Mobile floating SOS button — always visible at bottom center */}
+          {/* Mobile floating SOS — always visible bottom center */}
           {isMobile && (
             <div style={{
               position: 'absolute', bottom: 40, left: '50%',
@@ -276,7 +288,8 @@ export default function DashboardPage() {
                   background: '#1A1A1A', border: '3px solid #D62828',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <div style={{ width: 28, height: 28, border: '3px solid rgba(214,40,40,0.3)', borderTop: '3px solid #D62828', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                  <div style={{ width: 28, height: 28, border: '3px solid rgba(214,40,40,0.3)', borderTop: '3px solid #D62828', borderRadius: '50%', animation: 'spin2 0.7s linear infinite' }} />
+                  <style>{`@keyframes spin2{to{transform:rotate(360deg)}}`}</style>
                 </div>
               ) : (
                 <SOSButton status={sosStatus} onSOS={handleSOS} onResolve={handleResolve} />
@@ -290,28 +303,33 @@ export default function DashboardPage() {
               position: 'absolute', top: 16, left: '50%',
               transform: 'translateX(-50%)',
               background: '#D62828', color: '#fff',
-              padding: '12px 24px', borderRadius: 'var(--r-full)',
-              fontWeight: 700, fontSize: 15,
+              padding: '12px 20px', borderRadius: 99,
+              fontWeight: 700, fontSize: 14,
               boxShadow: '0 4px 20px rgba(214,40,40,0.5)',
-              animation: 'fadeIn 0.5s ease', zIndex: 10,
-              whiteSpace: 'nowrap',
+              zIndex: 10, whiteSpace: 'nowrap',
+              animation: 'fadeInBanner 0.5s ease',
             }}>
               ✅ You are safe now — tap RESOLVE to close
-              <style>{`@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
+              <style>{`@keyframes fadeInBanner{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
             </div>
           )}
 
           {/* My location button */}
           <button onClick={getLocation} style={{
-            position: 'absolute', bottom: isMobile ? 160 : 80, right: 16,
-            background: 'var(--bg-surface)', border: '1px solid var(--border-color)',
-            borderRadius: 'var(--r-md)', padding: '10px 14px', cursor: 'pointer',
-            color: 'var(--fg)', display: 'flex', alignItems: 'center', gap: 6,
+            position: 'absolute',
+            bottom: isMobile ? 160 : 80,
+            right: 16,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--r-md)', padding: '10px 14px',
+            cursor: 'pointer', color: 'var(--fg)',
+            display: 'flex', alignItems: 'center', gap: 6,
             fontFamily: 'var(--font)', fontSize: 13, fontWeight: 500,
             boxShadow: '0 2px 12px rgba(0,0,0,0.3)', zIndex: 5,
           }}>
             <MapPin size={14} color="var(--accent)" /> My Location
           </button>
+
         </main>
       </div>
     </div>
