@@ -13,6 +13,13 @@ const DARK_TILES  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.p
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>';
 
+// Extended bounds: Mumbai + Vasai + Virar + Palghar + Thane + Navi Mumbai
+const BOUNDS = [
+  [18.8500, 72.7500], // SW — Below Colaba
+  [20.2000, 73.4000], // NE — Covers Vasai, Virar, Palghar
+];
+const DEFAULT_CENTER = [19.2900, 72.8500];
+
 const randomNearby = (lat, lng, minKm = 0.3, maxKm = 1.8) => {
   const r = (minKm + Math.random() * (maxKm - minKm)) / 111;
   const a = Math.random() * 2 * Math.PI;
@@ -58,12 +65,11 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
   const mapRef             = useRef(null);
   const tileLayerRef       = useRef(null);
   const userMarkerRef      = useRef(null);
-  const allVolMarkersRef   = useRef([]); // ALL volunteers always on map
-  const allVolPositionsRef = useRef([]); // stored positions for all volunteers
+  const allVolMarkersRef   = useRef([]);
+  const allVolPositionsRef = useRef([]);
   const routeLinesRef      = useRef([]);
   const arrivedRef         = useRef(0);
   const LRef               = useRef(null);
-  const mapReadyRef        = useRef(false);
 
   useEffect(() => {
     import('leaflet').then((mod) => {
@@ -72,46 +78,52 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
     });
   }, []);
 
-    const initMap = () => {
+  const initMap = () => {
     const L = LRef.current;
     if (!L || !containerRef.current || mapRef.current) return;
 
-    // 1. Define bounds to cover Mumbai up to Mira Bhayandar & Thane
-    const MUMBAI_BOUNDS = [
-      [18.8500, 72.7500], // Southwest coordinate (Below Colaba)
-      [19.3500, 73.1000]  // Northeast coordinate (Above Mira Bhayandar)
-    ];
+    const center = userLocation
+      ? [userLocation.lat, userLocation.lng]
+      : DEFAULT_CENTER;
 
-    // 2. Default fallback center to Mumbai (instead of Nagpur)
-    const center = userLocation ? [userLocation.lat, userLocation.lng] : [19.0760, 72.8777];
-
-    // 3. Apply bounds and viscosity to the map instance
-    const map = L.map(containerRef.current, { 
-      center, 
-      zoom: 15, 
-      minZoom: 11, // Keeps users from zooming out into space
+    const map = L.map(containerRef.current, {
+      center,
+      zoom: userLocation ? 15 : 10,
+      minZoom: 10,
+      maxZoom: 18,
       zoomControl: false,
-      maxBounds: MUMBAI_BOUNDS,
-      maxBoundsViscosity: 1.0 // Makes the edges solid like a wall
+      maxBounds: BOUNDS,
+      maxBoundsViscosity: 1.0,
+      // Mobile touch optimizations
+      tap: true,
+      tapTolerance: 15,
+      touchZoom: true,
+      bounceAtZoomLimits: false,
     });
-    
+
+    // Move zoom control to bottom right (thumb friendly)
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     const tiles = L.tileLayer(theme === 'dark' ? DARK_TILES : LIGHT_TILES, {
-      attribution: ATTRIBUTION, maxZoom: 19,
+      attribution: ATTRIBUTION,
+      maxZoom: 19,
+      // Better tile loading on mobile
+      updateWhenIdle: false,
+      updateWhenZooming: false,
+      keepBuffer: 2,
     }).addTo(map);
 
     tileLayerRef.current = tiles;
     mapRef.current = map;
-    mapReadyRef.current = true;
   };
-  
 
+  // Theme swap
   useEffect(() => {
     if (!tileLayerRef.current) return;
     tileLayerRef.current.setUrl(theme === 'dark' ? DARK_TILES : LIGHT_TILES);
   }, [theme]);
 
+  // Inject CSS
   useEffect(() => {
     if (document.getElementById('sw-map-css')) return;
     const s = document.createElement('style');
@@ -141,17 +153,17 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
         animation:pulse-idle 3s infinite;cursor:pointer;
       }
       .vol-idle.dispatched{
-        width:38px;height:38px;background:#1A1A1A;
+        width:44px;height:44px;background:#1A1A1A;
         border:2.5px solid #E85D04;border-radius:50%;
         display:flex;align-items:center;justify-content:center;
-        font-size:19px;box-shadow:0 2px 10px rgba(0,0,0,0.5);
+        font-size:20px;box-shadow:0 2px 10px rgba(0,0,0,0.5);
         animation:none;
       }
       .vol-idle.arrived{border-color:#22c55e;}
       .vol-idle.idle-during-sos{opacity:0.3;filter:grayscale(1);}
       .sw-popup .leaflet-popup-content-wrapper{
         background:#1A1A1A;color:#F5F5F5;
-        border:1px solid rgba(255,255,255,0.1);border-radius:8px;
+        border:1px solid rgba(255,255,255,0.1);border-radius:10px;
         font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;
       }
       .sw-popup .leaflet-popup-tip{background:#1A1A1A;}
@@ -161,6 +173,12 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
         font-family:'Space Grotesk',sans-serif;font-size:12px;
       }
       .idle-popup .leaflet-popup-tip{background:#1A1A1A;}
+      /* Mobile: bigger tap targets */
+      @media(max-width:768px){
+        .vol-idle{ width:16px;height:16px; }
+        .leaflet-control-zoom a{ width:36px;height:36px;line-height:36px;font-size:18px; }
+        .leaflet-popup-content{ margin:10px 14px; }
+      }
     `;
     document.head.appendChild(s);
   }, []);
@@ -170,26 +188,30 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
     const L = LRef.current;
     const map = mapRef.current;
     if (!L || !map || !userLocation) return;
+
     const el = document.createElement('div');
     el.className = `user-dot${sosActive ? ' sos' : ''}`;
     const icon = L.divIcon({ html: el, className: '', iconSize: [18, 18], iconAnchor: [9, 9] });
+
     if (userMarkerRef.current) {
       userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
       const dotEl = userMarkerRef.current.getElement()?.firstChild;
       if (dotEl) dotEl.className = `user-dot${sosActive ? ' sos' : ''}`;
     } else {
-      userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], { icon, zIndexOffset: 1000 }).addTo(map);
+      userMarkerRef.current = L.marker(
+        [userLocation.lat, userLocation.lng],
+        { icon, zIndexOffset: 1000 }
+      ).addTo(map);
     }
     map.flyTo([userLocation.lat, userLocation.lng], 15, { duration: 1 });
   }, [userLocation, sosActive]);
 
-  // Spawn ALL volunteers on map as idle dots when location is known
+  // Spawn idle volunteer dots
   useEffect(() => {
     const L = LRef.current;
     const map = mapRef.current;
     if (!L || !map || !userLocation || allVolMarkersRef.current.length > 0) return;
 
-    // Spawn 6 idle volunteer dots near user (anonymous)
     const COUNT = 6;
     for (let i = 0; i < COUNT; i++) {
       const [lat, lng] = randomNearby(userLocation.lat, userLocation.lng, 0.3, 2.0);
@@ -197,7 +219,6 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
 
       const el = document.createElement('div');
       el.className = 'vol-idle';
-      el.dataset.idx = i;
 
       const icon = L.divIcon({ html: el, className: '', iconSize: [13, 13], iconAnchor: [6, 6] });
 
@@ -209,26 +230,20 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
     }
   }, [userLocation]);
 
-  // When SOS triggers — upgrade 3 nearest to named markers, grey out the rest
-    // When SOS triggers — upgrade 3 nearest to named markers, grey out the rest
+  // SOS — upgrade markers + road routing
   useEffect(() => {
     const L = LRef.current;
     const map = mapRef.current;
     if (!L || !map) return;
 
-    // Clean route lines
     routeLinesRef.current.forEach(l => l.remove());
     routeLinesRef.current = [];
     arrivedRef.current = 0;
 
     if (!sosActive) {
-      // SOS resolved — restore all idle dots to normal
       allVolMarkersRef.current.forEach((marker, idx) => {
         const el = marker.getElement()?.firstChild;
-        if (el) {
-          el.className = 'vol-idle';
-          el.textContent = '';
-        }
+        if (el) { el.className = 'vol-idle'; el.textContent = ''; }
         marker.unbindPopup();
         const pos = allVolPositionsRef.current[idx];
         if (pos) marker.setLatLng([pos.lat, pos.lng]);
@@ -239,34 +254,25 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
 
     if (!volunteers?.length || !userLocation) return;
 
-    // Helper to calculate tier inside the map view
     const getMapTier = (assists, rating) => {
-      if (assists >= 150 && rating >= 4.8) return { name: 'Guardian', color: '#8b5cf6', icon: '💎' }; 
-      if (assists >= 50 && rating >= 4.5) return { name: 'Gold', color: '#eab308', icon: '🏆' }; 
-      if (assists >= 11 && rating >= 4.2) return { name: 'Silver', color: '#94a3b8', icon: '🛡️' }; 
-      return { name: 'Bronze', color: '#d97706', icon: '🥉' }; 
+      if (assists >= 150 && rating >= 4.8) return { name: 'Guardian', color: '#8b5cf6' };
+      if (assists >= 50  && rating >= 4.5) return { name: 'Gold',     color: '#eab308' };
+      if (assists >= 11  && rating >= 4.2) return { name: 'Silver',   color: '#94a3b8' };
+      return { name: 'Bronze', color: '#d97706' };
     };
 
-    // Grey out ALL idle markers first
     allVolMarkersRef.current.forEach((marker) => {
       const el = marker.getElement()?.firstChild;
       if (el) el.classList.add('idle-during-sos');
     });
 
-    // For each dispatched volunteer — take over one idle marker slot
     volunteers.forEach((vol, i) => {
       const marker = allVolMarkersRef.current[i];
       if (!marker) return;
 
-      // Calculate the tier based on the volunteer's data (defaulting to 0 if missing)
-      const assists = vol.total_assists || 0;
-      const rating = vol.rating || 0;
-      const tier = getMapTier(assists, rating);
-
-      // Move marker to volunteer's actual starting position
+      const tier = getMapTier(vol.total_assists || 0, vol.rating || 0);
       marker.setLatLng([vol.currentLat, vol.currentLng]);
 
-      // Upgrade the element to named volunteer marker
       const el = marker.getElement()?.firstChild;
       if (el) {
         el.className = 'vol-idle dispatched';
@@ -274,65 +280,67 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
         el.classList.remove('idle-during-sos');
       }
 
-      // Upgrade popup with the new Trust Card HTML
-      const popupHtml = `
-        <div style="padding: 4px; min-width: 140px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; margin-bottom: 6px;">
-            <strong style="font-size: 14px; display: flex; align-items: center; gap: 4px;">
-              ${vol.name} ${vol.isVerified ? '<span style="color: #22c55e;" title="Verified">✓</span>' : ''}
+      marker.unbindPopup();
+      marker.bindPopup(`
+        <div style="padding:4px;min-width:140px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:6px;margin-bottom:6px;">
+            <strong style="font-size:14px;">
+              ${vol.name} ${vol.isVerified ? '<span style="color:#22c55e">✓</span>' : ''}
             </strong>
-            <span style="font-size: 10px; background: ${tier.color}; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+            <span style="font-size:10px;background:${tier.color};color:white;padding:2px 6px;border-radius:4px;font-weight:bold;">
               ${tier.name}
             </span>
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #A0A0A0;">
-             <span>⭐ ${rating}</span>
-             <span>📍 ${vol.distance || '?'} km</span>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#A0A0A0;">
+            <span>⭐ ${vol.rating || '?'}</span>
+            <span>📍 ${vol.distance || '?'} km</span>
           </div>
         </div>
-      `;
+      `, { className: 'sw-popup', closeButton: false });
 
-      marker.unbindPopup();
-      marker.bindPopup(popupHtml, { className: 'sw-popup', closeButton: false });
-
-      // Draw dashed route preview
       const routeLine = L.polyline(
         [[vol.currentLat, vol.currentLng], [userLocation.lat, userLocation.lng]],
         { color: '#E85D04', weight: 2.5, opacity: 0.35, dashArray: '6 8' }
       ).addTo(map);
       routeLinesRef.current.push(routeLine);
 
-      // Fetch road route + animate
       setTimeout(async () => {
         const targetLat = userLocation.lat + (Math.random() - 0.5) * 0.0004;
         const targetLng = userLocation.lng + (Math.random() - 0.5) * 0.0004;
         const waypoints = await fetchRoute(vol.currentLat, vol.currentLng, targetLat, targetLng);
-
         routeLine.setLatLngs(waypoints);
         routeLine.setStyle({ opacity: 0.6 });
-
         animateAlongRoute(marker, waypoints, 6000 + i * 1000, () => {
           const el2 = marker.getElement()?.firstChild;
           if (el2) { el2.textContent = '🟢'; el2.classList.add('arrived'); }
           routeLine.setStyle({ color: '#22c55e', opacity: 0.4 });
           arrivedRef.current++;
-          if (arrivedRef.current === volunteers.length) {
-            onVolunteerArrived?.();
-          }
+          if (arrivedRef.current === volunteers.length) onVolunteerArrived?.();
         });
       }, 400 + i * 300);
     });
   }, [sosActive, volunteers, userLocation]);
-  
+
+  // Resize observer — critical for mobile
   useEffect(() => {
-    const obs = new ResizeObserver(() => mapRef.current?.invalidateSize());
+    const obs = new ResizeObserver(() => {
+      if (mapRef.current) {
+        mapRef.current.invalidateSize({ animate: false });
+      }
+    });
     if (containerRef.current) obs.observe(containerRef.current);
     return () => obs.disconnect();
   }, []);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <div ref={containerRef} style={{ width: '100%', height: '100%', borderRadius: 'inherit' }} />
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 0 }}>
+      <div
+        ref={containerRef}
+        style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+        }}
+      />
     </div>
   );
 }
