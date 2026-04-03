@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useTheme } from '../../context/ThemeContext';
+export default function MapView({ userLocation, volunteers, sosActive, onVolunteerArrived, showZones }) {
 
 if (!document.getElementById('leaflet-css')) {
   const link = document.createElement('link');
@@ -320,6 +321,60 @@ export default function MapView({ userLocation, volunteers, sosActive, onVolunte
       }, 400 + i * 300);
     });
   }, [sosActive, volunteers, userLocation]);
+
+  const zoneLayersRef = useRef([]);
+
+useEffect(() => {
+  const L = LRef.current;
+  const map = mapRef.current;
+  if (!L || !map) return;
+
+  // Remove existing zone circles
+  zoneLayersRef.current.forEach(l => l.remove());
+  zoneLayersRef.current = [];
+
+  if (!showZones || !userLocation) return;
+
+  // Fetch zones from backend and draw them
+  import('../../services/api').then(({ default: api }) => {
+    api.get('/risk-zones', {
+      params: { lat: userLocation.lat, lng: userLocation.lng, radius: 10000 }
+    }).then(res => {
+      const zones = res.data.zones || [];
+      const COLORS = {
+        high:     { fill: 'rgba(214,40,40,0.18)', stroke: '#D62828' },
+        moderate: { fill: 'rgba(232,93,4,0.15)',  stroke: '#E85D04' },
+        low:      { fill: 'rgba(34,197,94,0.12)', stroke: '#22c55e' },
+      };
+
+      zones.forEach(zone => {
+        const c = COLORS[zone.risk_level];
+
+        const glow = L.circle([zone.lat, zone.lng], {
+          radius: zone.radius * 1.3,
+          color: c.stroke, fillColor: c.fill,
+          fillOpacity: 0.06, weight: 0,
+        }).addTo(map);
+
+        const circle = L.circle([zone.lat, zone.lng], {
+          radius: zone.radius,
+          color: c.stroke, fillColor: c.fill,
+          fillOpacity: 1, weight: 2,
+          dashArray: zone.risk_level === 'high' ? '6 4' : null,
+        }).addTo(map);
+
+        circle.bindPopup(`
+          <div style="font-family:'Space Grotesk',sans-serif;padding:4px">
+            <b style="font-size:14px">${zone.risk_level === 'high' ? '🔴' : zone.risk_level === 'moderate' ? '🟡' : '🟢'} ${zone.name}</b>
+            <p style="font-size:12px;color:#A0A0A0;margin:4px 0 0">${zone.description || ''}</p>
+          </div>
+        `, { className: 'sw-popup', closeButton: false });
+
+        zoneLayersRef.current.push(glow, circle);
+      });
+    }).catch(() => {});
+  });
+}, [showZones, userLocation]);
 
   // Resize observer — critical for mobile
   useEffect(() => {
