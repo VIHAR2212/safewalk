@@ -5,7 +5,7 @@ import api from '../../services/api';
 // ── Locality Data structured by Zone → Suburb → Side ──────────────────────────
 const ZONE_DATA = {
   'South Mumbai': {
-    noSplit: ['Colaba', 'Worli', 'Chembur'],
+    noSplit: ['Colaba', 'Worli', 'Chembur','Mumbai General'],
   },
   'North Mumbai': {
     noSplit: ['Mira Bhayandar', 'Powai'],
