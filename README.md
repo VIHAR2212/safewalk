@@ -37,6 +37,7 @@ SafeWalk is designed with a decoupled, modern architecture, optimized for reliab
 
 ---
 ## 📁 Folder Structure 
+```text
 safewalk/
 ├── backend/
 │   ├── src/
@@ -97,7 +98,7 @@ safewalk/
 │   └── vite.config.js                  ← Vite bundler configuration
 │
 └── README.md                           ← Project documentation
-
+```
 
 ---
 
