@@ -152,11 +152,11 @@ export default function LoginPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <p style={{ fontSize: 13, color: 'var(--fg-muted)', textAlign: 'center', margin: 0 }}>Login instantly with a demo account</p>
                 <button style={{ ...BTN_OUTLINE, borderColor: 'var(--accent)', color: 'var(--accent)', padding: '13px' }} onClick={() => handleSubmit('user')}>
-                  <alt="" style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }} />
+                  < style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }} />
                   Demo User Account
                 </button>
                 <button style={{ ...BTN_OUTLINE, padding: '13px' }} onClick={() => handleSubmit('volunteer')}>
-                  <alt="" style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }} />
+                  < style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }} />
                   Demo Volunteer Account
                 </button>
                 <p style={{ fontSize: 12, color: 'var(--fg-muted)', textAlign: 'center', margin: 0 }}>
