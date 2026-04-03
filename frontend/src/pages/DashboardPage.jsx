@@ -13,15 +13,14 @@ import api from '../services/api';
 
 export default function DashboardPage() {
   const { location, locLoading, getLocation } = useUserLocation();
-  const [sosStatus, setSosStatus] = useState('idle'); 
+  const [sosStatus, setSosStatus] = useState('idle');
   const [emergencyId, setEmergencyId] = useState(null);
   const [volunteers, setVolunteers] = useState([]);
   const [volCount, setVolCount] = useState(0);
-  const [volPhase, setVolPhase] = useState(null); 
-  const [sidePanel, setSidePanel] = useState('risk'); 
+  const [volPhase, setVolPhase] = useState(null);
+  const [sidePanel, setSidePanel] = useState('risk');
   const [sosLoading, setSosLoading] = useState(false);
-  
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
@@ -33,7 +32,8 @@ export default function DashboardPage() {
   const isMobile = windowWidth <= 768;
 
   useEffect(() => { getLocation(); }, []);
-    useEffect(() => {
+
+  useEffect(() => {
     api.get('/volunteers').then(r => setVolCount(r.data.availableCount)).catch(() => {});
     const iv = setInterval(() => {
       api.get('/volunteers').then(r => setVolCount(r.data.availableCount)).catch(() => {});
@@ -54,7 +54,7 @@ export default function DashboardPage() {
       setEmergencyId(r.data.emergency.id);
       setVolPhase('dispatched');
       setSidePanel('sos');
-      setIsMobileMenuOpen(true); 
+      setIsMobileMenuOpen(true);
       const vols = (r.data.assignments || []).map(a => ({
         id: a.volunteer_id,
         name: a.volunteers?.users?.name || 'Volunteer',
@@ -79,7 +79,7 @@ export default function DashboardPage() {
       setVolunteerList(vols);
       setVolPhase('dispatched');
       setSidePanel('sos');
-      if (vols.length === 0) {
+      if (!vols || vols.length === 0) {
         toast(message || 'No volunteers nearby. Stay safe — authorities alerted.', { icon: '⚠️', duration: 6000 });
       } else {
         toast.success(`SOS triggered! ${vols.length} volunteer(s) dispatched.`);
@@ -92,7 +92,7 @@ export default function DashboardPage() {
   }, [location]);
 
   const setVolunteerList = (vols) => {
-    setVolunteers(vols.map(v => ({
+    setVolunteers((vols || []).map(v => ({
       ...v,
       currentLat: v.currentLat || (location?.lat || 21.1458) + (Math.random() - 0.5) * 0.02,
       currentLng: v.currentLng || (location?.lng || 79.0882) + (Math.random() - 0.5) * 0.02,
@@ -114,7 +114,7 @@ export default function DashboardPage() {
       setVolunteers([]);
       setVolPhase(null);
       setSidePanel('risk');
-      setIsMobileMenuOpen(false); 
+      setIsMobileMenuOpen(false);
       toast.success('You are safe now. Emergency resolved.');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Could not resolve. Try again.');
@@ -136,28 +136,34 @@ export default function DashboardPage() {
     transform: isMobile && !isMobileMenuOpen ? 'translateX(-100%)' : 'translateX(0)',
     transition: 'transform 0.3s ease-in-out',
   };
-     return (
+
+  return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg)', position: 'relative' }}>
       <Navbar volunteerCount={volCount} />
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
 
+        {/* Mobile backdrop */}
         {isMobile && isMobileMenuOpen && (
-          <div 
+          <div
             onClick={() => setIsMobileMenuOpen(false)}
-            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, backdropFilter: 'blur(2px)' }} 
+            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, backdropFilter: 'blur(2px)' }}
           />
         )}
 
+        {/* Sidebar */}
         <aside style={sidebarStyle}>
+
+          {/* Mobile close button */}
           {isMobile && (
             <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '10px 15px', borderBottom: '1px solid var(--border-color)' }}>
-               <button onClick={() => setIsMobileMenuOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--fg)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <button onClick={() => setIsMobileMenuOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--fg)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                 <X size={24} />
               </button>
             </div>
           )}
 
+          {/* Status bar */}
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: sosStatus === 'active' ? '#D62828' : '#22c55e', animation: sosStatus === 'active' ? 'sosGlow 1.5s infinite' : 'none' }} />
@@ -167,41 +173,52 @@ export default function DashboardPage() {
               </span>
             </div>
             <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
-              <div style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 4 }}><Users size={12} /> {volCount} online</div>
-              <div style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={12} /> {location ? 'Located' : locLoading ? 'Locating...' : 'No location'}</div>
+              <div style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Users size={12} /> {volCount} online
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <MapPin size={12} /> {location ? 'Located' : locLoading ? 'Locating...' : 'No location'}
+              </div>
             </div>
           </div>
 
-          <div style={{ padding: '28px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'center' }}>
-            {sosLoading ? (
-              <div style={{ textAlign: 'center', padding: 20 }}>
-                <div style={{ width: 32, height: 32, border: '3px solid var(--bg-raised)', borderTop: '3px solid #D62828', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 12px' }} />
-                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-                <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Alerting volunteers...</p>
-              </div>
-            ) : ( <SOSButton status={sosStatus} onSOS={handleSOS} onResolve={handleResolve} /> )}
-          </div>
+          {/* SOS button — only in sidebar on desktop */}
+          {!isMobile && (
+            <div style={{ padding: '28px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'center' }}>
+              {sosLoading ? (
+                <div style={{ textAlign: 'center', padding: 20 }}>
+                  <div style={{ width: 32, height: 32, border: '3px solid var(--bg-raised)', borderTop: '3px solid #D62828', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 12px' }} />
+                  <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+                  <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Alerting volunteers...</p>
+                </div>
+              ) : (
+                <SOSButton status={sosStatus} onSOS={handleSOS} onResolve={handleResolve} />
+              )}
+            </div>
+          )}
 
+          {/* Panel tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', overflowX: 'auto' }}>
-           {['risk', 'sos', 'zones', 'forum'].map(p => (
+            {['risk', 'sos', 'zones', 'forum'].map(p => (
               <button key={p} onClick={() => setSidePanel(p)} style={{
                 flex: 1, padding: '10px 5px', border: 'none', background: 'transparent',
                 borderBottom: sidePanel === p ? '2px solid var(--accent)' : '2px solid transparent',
                 color: sidePanel === p ? 'var(--accent)' : 'var(--fg-muted)',
                 fontFamily: 'var(--font)', fontSize: 11, fontWeight: 600,
                 cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.5,
-                transition: 'color var(--t-fast)', whiteSpace: 'nowrap'
+                transition: 'color var(--t-fast)', whiteSpace: 'nowrap',
               }}>
                 {p === 'risk' ? '⚠ Risk' : p === 'sos' ? '🚨 SOS' : p === 'zones' ? '🗺 Zones' : '💬 Forum'}
               </button>
             ))}
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+          {/* Panel content */}
+          <div style={{ flex: 1, overflowY: sidePanel === 'zones' ? 'hidden' : 'auto', padding: sidePanel === 'zones' ? '0' : '16px', position: 'relative', minHeight: 0 }}>
             {sidePanel === 'risk' && <RiskPanel />}
             {sidePanel === 'forum' && <ForumPanel userLocation={location} userRole="user" userName="Demo User" />}
             {sidePanel === 'zones' && (
-              <div style={{ margin: '-16px', height: 'calc(100% + 32px)' }}>
+              <div style={{ position: 'absolute', inset: 0 }}>
                 <RiskZoneMap userLocation={location} />
               </div>
             )}
@@ -218,30 +235,82 @@ export default function DashboardPage() {
           </div>
         </aside>
 
+        {/* Map */}
         <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-          <MapView userLocation={location} volunteers={volunteers} sosActive={sosStatus === 'active'} onVolunteerArrived={handleVolunteerArrived} />
+          <MapView
+            userLocation={location}
+            volunteers={volunteers}
+            sosActive={sosStatus === 'active'}
+            onVolunteerArrived={handleVolunteerArrived}
+          />
 
+          {/* Mobile hamburger */}
           {isMobile && (
-            <button 
-              onClick={() => setIsMobileMenuOpen(true)} 
-              style={{ position: 'absolute', top: 16, left: 16, background: '#1A1A1A', border: '2px solid #E85D04', borderRadius: '8px', padding: '10px', cursor: 'pointer', color: '#E85D04', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.8)', zIndex: 9999 }}
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              style={{
+                position: 'absolute', top: 16, left: 16,
+                background: '#1A1A1A', border: '2px solid #E85D04',
+                borderRadius: '8px', padding: '10px', cursor: 'pointer',
+                color: '#E85D04', display: 'flex', alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.8)', zIndex: 500,
+              }}
             >
               <Menu size={24} />
             </button>
           )}
 
+          {/* Mobile floating SOS button — always visible at bottom center */}
+          {isMobile && (
+            <div style={{
+              position: 'absolute', bottom: 40, left: '50%',
+              transform: 'translateX(-50%)', zIndex: 500,
+            }}>
+              {sosLoading ? (
+                <div style={{
+                  width: 80, height: 80, borderRadius: '50%',
+                  background: '#1A1A1A', border: '3px solid #D62828',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <div style={{ width: 28, height: 28, border: '3px solid rgba(214,40,40,0.3)', borderTop: '3px solid #D62828', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                </div>
+              ) : (
+                <SOSButton status={sosStatus} onSOS={handleSOS} onResolve={handleResolve} />
+              )}
+            </div>
+          )}
+
+          {/* Safe banner */}
           {sosStatus === 'active' && volPhase === 'safe' && (
-            <div style={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', background: '#D62828', color: '#fff', padding: '12px 24px', borderRadius: 'var(--r-full)', fontWeight: 700, fontSize: 15, boxShadow: '0 4px 20px rgba(214,40,40,0.5)', animation: 'fadeIn 0.5s ease', zIndex: 10 }}>
+            <div style={{
+              position: 'absolute', top: 16, left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#D62828', color: '#fff',
+              padding: '12px 24px', borderRadius: 'var(--r-full)',
+              fontWeight: 700, fontSize: 15,
+              boxShadow: '0 4px 20px rgba(214,40,40,0.5)',
+              animation: 'fadeIn 0.5s ease', zIndex: 10,
+              whiteSpace: 'nowrap',
+            }}>
               ✅ You are safe now — tap RESOLVE to close
               <style>{`@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
             </div>
           )}
 
-          <button onClick={getLocation} style={{ position: 'absolute', bottom: 80, right: 16, background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: 'var(--r-md)', padding: '10px 14px', cursor: 'pointer', color: 'var(--fg)', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font)', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 12px rgba(0,0,0,0.3)', zIndex: 5 }}>
+          {/* My location button */}
+          <button onClick={getLocation} style={{
+            position: 'absolute', bottom: isMobile ? 160 : 80, right: 16,
+            background: 'var(--bg-surface)', border: '1px solid var(--border-color)',
+            borderRadius: 'var(--r-md)', padding: '10px 14px', cursor: 'pointer',
+            color: 'var(--fg)', display: 'flex', alignItems: 'center', gap: 6,
+            fontFamily: 'var(--font)', fontSize: 13, fontWeight: 500,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.3)', zIndex: 5,
+          }}>
             <MapPin size={14} color="var(--accent)" /> My Location
           </button>
         </main>
       </div>
     </div>
   );
-                      }
+}
