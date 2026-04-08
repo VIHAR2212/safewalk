@@ -9,6 +9,7 @@ import VolunteerPanel from '../components/sos/VolunteerPanel';
 import ForumPanel from '../components/dashboard/ForumPanel';
 import { useUserLocation } from '../hooks/useLocation';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function DashboardPage() {
   const { location, locLoading, getLocation } = useUserLocation();
@@ -29,11 +30,11 @@ export default function DashboardPage() {
   }, []);
 
   const isMobile = windowWidth <= 768;
-
+  const { t } = useLanguage();
   useEffect(() => { getLocation(); }, []);
 
   useEffect(() => {
-    api.get('/volunteers').then(r => setVolCount(r.data.availableCount)).catch(() => {});
+    api.get('/volunteers').then(r => setVolCo unt(r.data.availableCount)).catch(() => {});
     const iv = setInterval(() => {
       api.get('/volunteers').then(r => setVolCount(r.data.availableCount)).catch(() => {});
     }, 30000);
@@ -207,7 +208,7 @@ export default function DashboardPage() {
                 cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.5,
                 transition: 'color var(--t-fast)', whiteSpace: 'nowrap',
               }}>
-                {p === 'risk' ? '⚠ Risk' : p === 'sos' ? '🚨 SOS' : p === 'zones' ? '🗺 Zones' : '💬 Forum'}
+                {p === 'risk' ? `△ ${t('tabs.risk')}` : p === 'sos' ? `🚨 ${t('tabs.sos')}` : p === 'zones' ? `🗺 ${t('tabs.map')}` : `💬 ${t('tabs.forum')}`}
               </button>
             ))}
           </div>
